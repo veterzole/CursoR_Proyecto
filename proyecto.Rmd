@@ -1,0 +1,244 @@
+---
+title: "Proyecto"
+author: "Job Hernández Rodríguez"
+date: "2024-03-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+```
+
+
+# Accidentes automovilísticos 2022
+## Fuente de datos 
+
+Fuente: INEGI, Accidentes de Tránsito Terrestre en Zonas Urbanas y Suburbanas [Sitio](https://www.inegi.org.mx/programas/accidentes/#datos_abiertos)
+
+# 1.Objetivo
+
+Realizar una inspección de los datos recopilados por el INEGI sobre accidentes viales en México, con un enfoque inicial en el ámbito nacional.
+
+# 2.Justificación
+
+La realización de una inspección de los datos recopilados por el Instituto Nacional de Estadística y Geografía (INEGI) sobre accidentes viales en México se justifica por la necesidad de comprender y abordar adecuadamente los desafíos en materia de seguridad vial en el país. Al comenzar con un enfoque en el ámbito nacional, se busca obtener una visión panorámica de la situación de los accidentes viales en México, identificando tendencias, patrones y áreas de mayor incidencia a lo largo y ancho del territorio.
+El analizar el panorama nacional, se pueden identificar problemas específicos y desarrollar soluciones adaptadas a las necesidades locales.
+
+
+```{r include=FALSE}
+##Carga de datos
+library(ggplot2)
+library(scales)
+datos <- read.csv("atus_anual_2022.csv")
+catalogoMunicipio <- read.csv("tc_entidad.csv")
+cabeceras <- colnames(datos)
+```
+
+
+# 3. Análisis exploratorio de los datos
+## Variables obtenidas de los datos extraídos
+
+
+```{r}
+cabeceras
+```
+## Analisis de las cabeceras
+
+De las variables obtenidas las más llamativas para hacer un análisis son:
+
+ - ID_ENTIDAD. (Estado donde fue el accidente)
+ - DIASEMANA.
+ - MES.
+ - Vehículos involucrados(AUTOMOVIL, CAMPASAJ, MICROBUS, PASCAMION, OMNIBUS, TRANVIA, CAMIONETA, CAMION, TRACTOR, FERROCARRI, MOTOCICLET,BICICLETA	OTROVEHIC)
+ 
+
+## Número de accidentes Registrados
+
+Número de accidentes totales, cabe mencionar que un accidente puede tener más de un involucrado
+```{r}
+nAccidentesTotales <- nrow(datos)
+nAccidentesTotales
+```
+
+```{r include=FALSE}
+# cargada de datos
+
+totalPorEstado = c()
+for (i in 1:32) {
+  datosFiltradosCiclo <- datos[datos$ID_ENTIDAD==i,]
+  datosCivcloFor<- nrow(datosFiltradosCiclo)
+  totalPorEstado<-c(totalPorEstado,datosCivcloFor)
+}
+mediaAccidentes<- mean(totalPorEstado)
+medianaAccidentes<-median(totalPorEstado)
+
+dataMunicipioTotalesAccidentes <- cbind.data.frame(catalogoMunicipio,totalPorEstado)
+dataMunicipioTotalesAccidentes
+```
+## Total de accidentes por estado
+```{r out.width="200%"}
+dataMunicipioTotalesAccidentes
+
+```
+## Estadística descriptiva
+### Media
+```{r}
+  mediaAccidentes
+```
+
+Considerando el resultado del estudio de todos los estados, hemos obtenido una media de 12272.19 accidentes. Por lo tanto, cada estado experimentará esta media de accidentes anualmente.
+
+### Mediana
+```{r}
+  medianaAccidentes
+```
+
+Sea calculado una mediana de accidentes de 9175.5. Por lo tanto, podemos afirmar que en cada estado se espera que experimente esta cantidad de accidentes anualmente, reflejando la medida central de la distribución de datos recopilados.
+
+
+
+# 4.  Estadístico inferencial
+### Varianza
+```{r}
+var(totalPorEstado)
+```
+### Desviación Estándar
+
+```{r}
+sd(totalPorEstado)
+```
+
+# 5. Resultados
+
+```{r}
+barplot(height = dataMunicipioTotalesAccidentes$totalPorEstado,names = dataMunicipioTotalesAccidentes$ID_ENTIDAD  ,main = "Gráfica de accidente por estado",xlab = "ID_ENTIDAD",ylab="Número de accidentes ", col = rainbow(32))
+```
+
+## Grafica de bigotes
+```{r}
+boxplot(totalPorEstado,horizontal = TRUE)
+```
+
+Observando tanto la gráfica de caja y bigotes como los datos recopilados, se evidencia un punto en el cual la distribución de los datos difiere notablemente. Este punto se destaca especialmente en Nuevo León, donde se registra el máximo número de accidentes. Esta discrepancia también se refleja claramente en la gráfica de barras, donde se puede apreciar este comportamiento particular en la distribución de accidentes por estado. Este hallazgo resalta la importancia de investigar las posibles causas subyacentes detrás de este patrón específico en Nuevo León y tomar medidas adecuadas para abordar esta situación.
+
+### Accidentes por vehículos  
+
+```{r include=FALSE}
+numeroTotalAccidentesCamion<- sum(datos$CAMION)
+numeroTotalAccidentesAuto<- sum(datos$AUTOMOVIL)
+numeroTotalAccidentesMoto<- sum(datos$MOTOCICLET)
+numeroTotalAccidentesMicrobus<- sum(datos$MICROBUS)
+
+numeroTotalAccidentesOtros<-sum(datos$CAMPASAJ) + sum(datos$PASCAMION) + 
+                            sum(datos$OMNIBUS) + sum(datos$TRANVIA) + sum(datos$TRACTOR) + sum(datos$FERROCARRI) +
+                            sum(datos$OTROVEHIC) + sum(datos$CAMION)
+
+numeroTotalAccidentes = 
+  numeroTotalAccidentesCamion + numeroTotalAccidentesAuto + numeroTotalAccidentesMoto + numeroTotalAccidentesMicrobus +numeroTotalAccidentesOtros
+
+tipoAccidente<- factor(c(
+                         rep("Auto",numeroTotalAccidentesAuto),
+                         rep("Moto",numeroTotalAccidentesMoto),
+                         rep("Microbus",numeroTotalAccidentesMicrobus), 
+                         rep("Otros",numeroTotalAccidentesOtros)))
+tableTipoAccidente<- table(tipoAccidente)
+mean(tipoAccidente)
+```
+Total de vehículos involucradas por accidente
+
+```{r}
+numeroTotalAccidentes
+```
+Tabla de número de accidentes por vehículos
+```{r}
+tableTipoAccidente
+pie(tableTipoAccidente)
+```
+
+## Analisis de las graficas
+Los datos obtenidos muestran un mayor número de casos de choques de autos, seguido por otros tipos de accidentes, y posteriormente, los incidentes involucrando motocicletas. Sin embargo, es importante tener en cuenta que se necesita realizar una ponderación de los datos para obtener cifras fiables y precisas. Esta ponderación nos permitirá tener una visión más precisa de la frecuencia y gravedad de los diferentes tipos de accidentes, lo que a su vez facilitará la identificación de áreas prioritarias para la implementación de medidas de prevención y seguridad vial.
+
+# Mes y días con más accidentes
+
+```{r include=FALSE}
+ 
+tipoAccidenteDia<- factor(c(rep("Lunes",sum(datos$DIASEMANA=="lunes" )),
+                            rep("Martes", sum(datos$DIASEMANA=="Martes")),
+                            rep("Miercoles", miercoles <- sum(datos$DIASEMANA=="Miercoles")),
+                            rep("Jueves", jueves <- sum(datos$DIASEMANA=="Jueves") ),
+                            rep("Viernes", viernes <- sum(datos$DIASEMANA=="Viernes")  ),
+                            rep("Sabado", sabado <- sum(datos$DIASEMANA=="Sabado") ),
+                            rep("Domingo", sabado <- sum(datos$DIASEMANA=="Domingo"))))
+tableDia<- table(tipoAccidenteDia)
+
+vectorDiaSemana<-c(sum(datos$DIASEMANA=="lunes" ),
+             sum(datos$DIASEMANA=="Martes"),
+             miercoles <- sum(datos$DIASEMANA=="Miercoles"),
+             sum(datos$DIASEMANA=="Jueves"),
+             viernes <- sum(datos$DIASEMANA=="Viernes"),
+             sabado <- sum(datos$DIASEMANA=="Sabado"),
+             sum(datos$DIASEMANA=="Domingo"))
+
+tipoAccidenteMes<- factor(c(rep("Enero", sum(datos$MES==1 )),
+                            rep("Febrero", sum(datos$MES==2)),
+                            rep("Marzo", sum(datos$MES==3)),
+                            rep("Abril", sum(datos$MES==4)),
+                            rep("Mayo", sum(datos$MES==5)),
+                            rep("Junio", sum(datos$MES==6)),
+                            rep("Julio", sum(datos$MES==7)),
+                            rep("Agosto", sum(datos$MES==8)),
+                            rep("Septiembre", sum(datos$MES==9)),
+                            rep("Octubre", sum(datos$MES==10)),
+                            rep("Noviembre", sum(datos$MES==11)),
+                            rep("Diciembre", domingo <- sum(datos$MES==12))))
+tableMes<- table(tipoAccidenteMes)
+tableMes
+vectorMes<-c(sum(datos$MES==1),sum(datos$MES==2 ),sum(datos$MES==3 ),sum(datos$MES==4 ),sum(datos$MES==5 ),sum(datos$MES==6 ),
+             sum(datos$MES==7 ),sum(datos$MES==8 ),sum(datos$MES==9 ),sum(datos$MES==10 ),sum(datos$MES==11 ),sum(datos$MES==12 ))
+     
+
+```
+
+
+## Grafica por dia de la semana 
+
+```{r}
+tableDia
+pie(tableDia)
+```
+
+Inicialmente, se suponía que los datos mostrarían una tendencia hacia los días viernes, sábado y domingo en términos de incidentes. Sin embargo, tras el análisis inicial, se descubrió que la distribución de los accidentes no sigue necesariamente esta predicción.
+
+### Media por dia de la semana
+```{r}
+mean(vectorDiaSemana)
+```
+
+### Mediana por dia de la semana
+```{r}
+median(vectorDiaSemana)
+```
+
+## Grafica por Mes
+
+```{r}
+tableMes
+pie(tableMes)
+```
+
+### Media por mes
+```{r}
+mean(vectorMes)
+```
+
+### Mediana por mes
+```{r}
+median(vectorMes)
+```
+
+Observando el comportamiento de los datos, podemos analizar si existe una tendencia con respecto a la media y la mediana a través de la representación gráfica por mes. Se observa una ligera tendencia en el mes de diciembre, donde se registra un número ligeramente superior de incidentes en comparación con otros meses del año. Esto sugiere la necesidad de examinar más detenidamente los factores que podrían contribuir a esta variación estacional y considerar posibles medidas preventivas específicas para este período.
+
+
